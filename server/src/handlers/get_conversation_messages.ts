@@ -1,17 +1,25 @@
+import { db } from '../db';
+import { messagesTable } from '../db/schema';
 import { type Message } from '../schema';
+import { eq, asc } from 'drizzle-orm';
 
-export async function getConversationMessages(conversationId: number): Promise<Message[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all messages for a specific conversation.
-    // Should return messages ordered chronologically with research sources included.
-    return Promise.resolve([
-        {
-            id: 1,
-            conversation_id: conversationId,
-            content: 'Hello, how can I help you today?',
-            role: 'assistant',
-            sources: null,
-            created_at: new Date()
-        }
-    ] as Message[]);
-}
+export const getConversationMessages = async (conversationId: number): Promise<Message[]> => {
+  try {
+    // Query messages for the conversation, ordered chronologically
+    const results = await db.select()
+      .from(messagesTable)
+      .where(eq(messagesTable.conversation_id, conversationId))
+      .orderBy(asc(messagesTable.created_at))
+      .execute();
+
+    // Return messages with proper type conversion
+    return results.map(message => ({
+      ...message,
+      role: message.role as 'user' | 'assistant',
+      sources: message.sources as Message['sources']
+    }));
+  } catch (error) {
+    console.error('Failed to fetch conversation messages:', error);
+    throw error;
+  }
+};

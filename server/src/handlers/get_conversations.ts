@@ -1,16 +1,20 @@
+import { db } from '../db';
+import { conversationsTable } from '../db/schema';
 import { type Conversation } from '../schema';
+import { eq, desc } from 'drizzle-orm';
 
-export async function getConversations(userId: number): Promise<Conversation[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all conversations for a specific user.
-    // Should return conversations ordered by most recent first for the sidebar.
-    return Promise.resolve([
-        {
-            id: 1,
-            user_id: userId,
-            title: 'Sample Conversation',
-            created_at: new Date(),
-            updated_at: new Date()
-        }
-    ] as Conversation[]);
-}
+export const getConversations = async (userId: number): Promise<Conversation[]> => {
+  try {
+    // Query conversations for the specific user, ordered by most recent first
+    const results = await db.select()
+      .from(conversationsTable)
+      .where(eq(conversationsTable.user_id, userId))
+      .orderBy(desc(conversationsTable.updated_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Get conversations failed:', error);
+    throw error;
+  }
+};
